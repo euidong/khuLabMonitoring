@@ -1,8 +1,8 @@
 # khu-lab-monitoring
 
 ### Member
-- JHyunB
-- euidong
+- JHyunB : (주)로직 설계 및 디자인 (부) 통신
+- euidong : (주)통신 및 로직 설계 (부) 디자인
 
 ### Goal 
 - 교내 pc 제어 프로그램 
