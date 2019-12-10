@@ -1,0 +1,38 @@
+﻿<Window x:Class="server.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:server"
+        mc:Ignorable="d"
+        Title="KHULabMonitoring" Height="450" Width="800">
+    
+    <Grid>
+        <Grid.Background>
+            <ImageBrush Stretch="Uniform" ImageSource="/Resources/logo.png"/>
+        </Grid.Background>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Button Content="Lab11" Grid.Column="0" Grid.Row="2" FontSize="20" Click="Button_Click" Background="#E5DDDDDD" />
+        <Button Content="Lab09" Grid.Column="1" Grid.Row="2" FontSize="20" Click="Button_Click" Background="#E5DDDDDD"/>
+        <Button Content="Lab07" Grid.Column="2" Grid.Row="2" FontSize="20" Click="Button_Click" Background="#E5DDDDDD"/>
+        <Button Content="Lab05" Grid.Column="3" Grid.Row="2" FontSize="20" Click="Button_Click" Background="#E5DDDDDD"/>
+
+        <Button Content="Lab01" Grid.Column="5" Grid.Row="2" FontSize="20" Click="Button_Click" Background="#E5DDDDDD"/>
+        <Button Content="Lab06" Grid.Column="3" Grid.Row="0" FontSize="20" Click="Button_Click" Background="#E5DDDDDD"/>
+        <TextBlock Grid.Column="4" Grid.Row="2"  TextWrapping="Wrap" Text="칼랩실" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" />
+        <Border BorderBrush="Black" BorderThickness="1" Grid.ColumnSpan="6" Grid.Row="1" />
+
+    </Grid>
+</Window>

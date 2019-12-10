@@ -1,0 +1,49 @@
+﻿<Window x:Class="server.SubLabWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:server"
+        mc:Ignorable="d"
+        Title="subLabWindow" Height="688.091" Width="905.71" Closed="Window_Closed" Loaded="Window_Loaded">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="PC power">
+                <MenuItem Header="All PC Power Off" Click="AllPcPowerOff"/>
+                <MenuItem Header="All PC Power Reboot" Click="AllPcPowerReboot"/>
+
+            </MenuItem>
+        </Menu>
+        <Grid x:Name="MainGrid" Height="522" HorizontalAlignment="Left" Margin="0,0,0,98" Width="624">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Column="5" HorizontalAlignment="Left" Height="619" Margin="104,0,-250,-97" Grid.RowSpan="9" VerticalAlignment="Top" Width="250">
+                <TextBox x:Name="subLabText" HorizontalAlignment="Left" Height="609" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="230"/>
+            </Grid>
+            <Grid Margin="2,68,0,-97" Grid.Row="8" Grid.ColumnSpan="6">
+                <TextBox x:Name="comText" HorizontalAlignment="Left" Height="61" Margin="10,16,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="612"/>
+                <TextBlock x:Name="SelectedCom" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top"/>
+            </Grid>
+
+        </Grid>
+
+    </DockPanel>
+</Window>
