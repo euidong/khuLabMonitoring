@@ -15,13 +15,11 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace server
-{
+namespace server {
     /// <summary>
     /// MainWindow.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class MainWindow : Window
-    {
+    public partial class MainWindow : Window {
         private static Management lab01_manager;
         private static Management lab05_manager;
         private static Management lab07_manager;
@@ -30,15 +28,13 @@ namespace server
         private static Management lab06_manager;
 
         NotifyIcon notify;
-        public MainWindow()
-        {
-            try
-            {
+        public MainWindow() {
+            try {
                 System.Windows.Forms.ContextMenu menu = new System.Windows.Forms.ContextMenu();
                 notify = new NotifyIcon();
                 //notify.Icon = new System.Drawing.Icon(@"TiimeAlarm.ico");
                 System.Drawing.Icon myIcon = new System.Drawing.Icon("../../Resources/icon.ico");
-                
+
                 notify.Icon = myIcon;
                 notify.Visible = true;
                 notify.ContextMenu = menu;
@@ -50,14 +46,12 @@ namespace server
                 menu.MenuItems.Add(item1);
                 item1.Index = 0;
                 item1.Text = "종료";
-                item1.Click += delegate (object click, EventArgs eClick)
-                {
+                item1.Click += delegate (object click, EventArgs eClick) {
                     System.Windows.Application.Current.Shutdown();
                     notify.Dispose();
                 };
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 Console.WriteLine(e.ToString());
             }
             lab01_manager = new Management("01");
@@ -69,28 +63,24 @@ namespace server
             InitializeComponent();
         }
 
-        private void Notify_DoubleClick(object sender, EventArgs e)
-        {
+        private void Notify_DoubleClick(object sender, EventArgs e) {
             this.Show();
             this.WindowState = WindowState.Normal;
             this.Visibility = Visibility.Visible;
         }
 
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e) {
             e.Cancel = true;
             this.Hide();
             base.OnClosing(e);
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
+        private void Button_Click(object sender, RoutedEventArgs e) {
             System.Windows.Controls.Button Clicked = sender as System.Windows.Controls.Button;
             SubLabWindow sub = null;
             //랩실별로 컴퓨터 정보 가져오기
             string labNo = Clicked.Content.ToString();
-            switch (labNo)
-            {
+            switch (labNo) {
                 case "Lab01":
                     sub = new SubLabWindow(labNo, 54, ref lab01_manager);//파라미터에 랩실별 컴퓨터 수 넣기
                     break;
