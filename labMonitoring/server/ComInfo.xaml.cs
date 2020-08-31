@@ -36,7 +36,7 @@ namespace server {
              */
 
             num = int.Parse(comNo.Substring(4)) - 1;
-            if ((info = labManager.GetAllData(num)) != null) {
+            if ((info = labManager.GetAllData(num).Wait(-1, null)) != null) {
                 this.ipAddress.Text = info[0];
                 this.macAddress.Text = info[1];
                 this.cpuUsage.Text = info[2];
@@ -66,12 +66,12 @@ namespace server {
             labManager.PcPowerOn(num);
         }
         //해당 컴퓨터 전원끄기 구현
-        private void PcPowerOff(object sender, RoutedEventArgs e) {
-            labManager.PcPowerOff(num);
+        private async void PcPowerOff(object sender, RoutedEventArgs e) {
+            await labManager.PcPowerOffAsync(num);
         }
 
-        private void PcPowerReboot(object sender, RoutedEventArgs e) {
-            labManager.PcPowerReboot(num);
+        private async void PcPowerReboot(object sender, RoutedEventArgs e) {
+            await labManager.PcPowerRebootAsync(num);
         }
 
         private void Window_Closed(object sender, EventArgs e) {
