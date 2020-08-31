@@ -39,7 +39,7 @@ namespace server {
       }
       file.Close();
     }
-    
+
     public void setButtonList(List<Button> list) {
       buttonList = list;
       renderView(null, null);
@@ -48,12 +48,12 @@ namespace server {
     // 상태확인하는 타이머 파라미터 (ms마다 등록한 함수 호출)
     private System.Timers.Timer rerenderTimer = new System.Timers.Timer(5000);
 
-    private void renderView(Object source, System.Timers.ElapsedEventArgs e) {
+    public void renderView(Object source, System.Timers.ElapsedEventArgs e) {
       checkStatus();
       drawButtonList();
     }
 
-    private voide checkStatus() {
+    private void checkStatus() {
       for (int i = 0; i < pc_num; i++) {
         int state = isAlive(i);
         if (state == (int)State.ON)
@@ -65,10 +65,10 @@ namespace server {
 
     private void drawButtonList() {
       if (buttonList != null) {
-        for (int i = 0; i < pc_num: i++) {
+        for (int i = 0; i < pc_num; i++) {
           buttonList.ElementAt(i).Dispatcher.Invoke(
             () => {
-              switch(pc_status[i]) {
+              switch (pc_status[i]) {
                 case (int)State.OFF:
                   buttonList.ElementAt(i).Background = Brushes.Gray;
                   break;
@@ -80,7 +80,7 @@ namespace server {
                   break;
               }
             }
-          )
+          );
         }
       }
     }
@@ -138,7 +138,7 @@ namespace server {
 
     public string receiveMessage(int target_pc) {
       try {
-        byte[] data = pc[target_pc].receive(ref sender);
+        byte[] data = pc[target_pc].Receive(ref sender);
         return Encoding.UTF8.GetString(data);
       }
       catch (SocketException e) {
