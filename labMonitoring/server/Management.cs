@@ -25,8 +25,8 @@ namespace server {
 
     public Management(string lab_num) {
       //타이머 함수 등록
-      aTimer.Elapsed += CheckStatus;
-      aTimer.Enabled = true;
+      rerenderTimer.Elapsed += renderView;
+      rerenderTimer.Enabled = true;
       string ip;
       pc_num = 0;
       pc = new UdpClient[100];
@@ -35,83 +35,68 @@ namespace server {
 
       while ((ip = file.ReadLine()) != null) {
         pc[pc_num] = new UdpClient(ip, port);
-        pc[pc_num++].Client.ReceiveTimeout = 10;
+        pc[pc_num++].Client.ReceiveTimeout = 10; // * 최초 시행 시에는 timeOut을 짧게하고, 그 다음부터는 느리게 수행
       }
       file.Close();
     }
+    
     public void setButtonList(List<Button> list) {
       buttonList = list;
-      CheckStatus(null, null);
-      setTimeOut(1000);
+      renderView(null, null);
+      setAllPcTimeOut(1000); // * 전체 화면 잡은 후로는 pc time out을 1초로 변경.
     }
     // 상태확인하는 타이머 파라미터 (ms마다 등록한 함수 호출)
-    private System.Timers.Timer aTimer = new System.Timers.Timer(5000);
+    private System.Timers.Timer rerenderTimer = new System.Timers.Timer(5000);
 
-    private void CheckStatus(Object source, System.Timers.ElapsedEventArgs e) {
+    private void renderView(Object source, System.Timers.ElapsedEventArgs e) {
+      checkStatus();
+      drawButtonList();
+    }
+
+    private voide checkStatus() {
+      for (int i = 0; i < pc_num; i++) {
+        int state = isAlive(i);
+        if (state == (int)State.ON)
+          pc_status[i] = state;
+        else if (pc_status[i] != (int)State.SUSPEND)
+          pc_status[i] = state;
+      }
+    }
+
+    private void drawButtonList() {
       if (buttonList != null) {
-        // pc상태에따라 0:꺼짐 1:켜짐 저장
-        for (int i = 0; i < pc_num; i++) {
-          int state = isAlive(i);
-          if (state == (int)State.ON)
-            pc_status[i] = state;
-          else if (pc_status[i] != (int)State.SUSPEND)
-            pc_status[i] = state;
-        }
-
-        for (int i = 0; i < pc_num; i++) {
+        for (int i = 0; i < pc_num: i++) {
           buttonList.ElementAt(i).Dispatcher.Invoke(
-              () => {
-                //꺼져있으면 버튼 회색으로
-                if (pc_status[i] == (int)State.OFF) {
+            () => {
+              switch(pc_status[i]) {
+                case (int)State.OFF:
                   buttonList.ElementAt(i).Background = Brushes.Gray;
-
-                }
-                else if (pc_status[i] == (int)State.SUSPEND) {
+                  break;
+                case (int)State.SUSPEND:
                   buttonList.ElementAt(i).Background = Brushes.OrangeRed;
-                }
-                //켜져있으면 버튼 밝은 회색
-                else {
+                  break;
+                default:
                   buttonList.ElementAt(i).Background = Brushes.LightGray;
-                }
+                  break;
               }
-              );
+            }
+          )
         }
       }
     }
 
 
-    public void setTimeOut(int time) {
+    public void setAllPcTimeOut(int time) {
       for (int i = 0; i < pc_num; i++)
         pc[i].Client.ReceiveTimeout = time;
     }
 
 
-    // TODO : 스레드로 바꾼다. SEND, RECEIVE
-    public void SendMessage(int target_pc, string message) {
-      if (pc[target_pc] != null) {
-        byte[] data = Encoding.UTF8.GetBytes(message);
-        pc[target_pc].Send(data, data.Length);
-      }
-
-    }
-
-    public string ReceiveMessage(int target_pc) {
-      try {
-        byte[] data = pc[target_pc].Receive(ref sender);
-        return Encoding.UTF8.GetString(data);
-      }
-      catch (SocketException e) {
-        return null;
-      }
-    }
-
     public int isAlive(int target_pc) {
-
-      SendMessage(target_pc, "check");
-
-      if (ReceiveMessage(target_pc) == null)
+      sendMessage(target_pc, "check");
+      if (receiveMessage(target_pc) == null)
         return (int)State.OFF;
-      else if (ReceiveMessage(target_pc) == "suspend")
+      else if (receiveMessage(target_pc) == "suspend")
         return (int)State.SUSPEND;
       else
         return (int)State.ON;
@@ -119,8 +104,8 @@ namespace server {
 
 
     public string[] GetAllData(int target_pc) {
-      SendMessage(target_pc, "all");
-      string result = ReceiveMessage(target_pc);
+      sendMessage(target_pc, "all");
+      string result = receiveMessage(target_pc);
       if (result != null)
         return result.Split(' ');
       else
@@ -129,26 +114,43 @@ namespace server {
 
 
     public string GetIPAddress(int target_pc) {
-      SendMessage(target_pc, "ip");
-      return ReceiveMessage(target_pc);
+      sendMessage(target_pc, "ip");
+      return receiveMessage(target_pc);
     }
 
     public string GetMacAddress(int target_pc) {
-      SendMessage(target_pc, "mac");
-      return ReceiveMessage(target_pc);
+      sendMessage(target_pc, "mac");
+      return receiveMessage(target_pc);
     }
 
     public string GetCpuUsage(int target_pc) {
-      SendMessage(target_pc, "cpu");
-      return ReceiveMessage(target_pc);
+      sendMessage(target_pc, "cpu");
+      return receiveMessage(target_pc);
     }
     public string GetRamRemain(int target_pc) {
-      SendMessage(target_pc, "ram");
-      return ReceiveMessage(target_pc);
+      sendMessage(target_pc, "ram");
+      return receiveMessage(target_pc);
     }
     public string GetHddUsage(int target_pc) {
-      SendMessage(target_pc, "hdd");
-      return ReceiveMessage(target_pc);
+      sendMessage(target_pc, "hdd");
+      return receiveMessage(target_pc);
+    }
+
+    public string receiveMessage(int target_pc) {
+      try {
+        byte[] data = pc[target_pc].receive(ref sender);
+        return Encoding.UTF8.GetString(data);
+      }
+      catch (SocketException e) {
+        return null;
+      }
+    }
+
+    public void sendMessage(int target_pc, string message) {
+      if (pc[target_pc] != null) {
+        byte[] data = Encoding.UTF8.GetBytes(message);
+        pc[target_pc].Send(data, data.Length);
+      }
     }
 
 
@@ -177,11 +179,11 @@ namespace server {
       return " ";
     }
     public void PcPowerOff(int target_pc) {
-      SendMessage(target_pc, "off");
+      sendMessage(target_pc, "off");
     }
 
     public void PcPowerReboot(int target_pc) {
-      SendMessage(target_pc, "reboot");
+      sendMessage(target_pc, "reboot");
     }
 
     public void AllPcPowerOn() {
