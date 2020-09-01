@@ -14,68 +14,75 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace server {
-    /// <summary>
-    /// ComInfo.xaml에 대한 상호 작용 논리
-    /// </summary>
-    public partial class ComInfo : Window {
-        private Management labManager;
-        string labNo;
-        int num; // pc num (int)
-        private System.Timers.Timer bTimer = new System.Timers.Timer(1000);
-        string[] info;
+  /// <summary>
+  /// ComInfo.xaml에 대한 상호 작용 논리
+  /// </summary>
+  public partial class ComInfo : Window {
+    private Management labManager;
+    string labNo;
+    int num; // pc num (int)
+    private System.Timers.Timer bTimer = new System.Timers.Timer(1000);
+    string[] info;
 
-        public ComInfo(string comNo, string labNo, ref Management labManager) {
-            InitializeComponent();
-            this.labNo = labNo;
-            this.comNo.Text = comNo;
-            this.labManager = labManager;
-            bTimer.Elapsed += setComStatus;
-            bTimer.Enabled = true;
-            /*
-            랩넘버와 컴넘버 이용해서 아이피 파일에서 읽어오기
-             */
+    public ComInfo(string comNo, string labNo, ref Management labManager) {
+      InitializeComponent();
+      this.labNo = labNo;
+      this.comNo.Text = comNo;
+      this.labManager = labManager;
+      bTimer.Elapsed += setComStatus;
+      bTimer.Enabled = true;
+      /*
+      랩넘버와 컴넘버 이용해서 아이피 파일에서 읽어오기
+       */
 
-            num = int.Parse(comNo.Substring(4)) - 1;
-            if ((info = labManager.GetAllData(num).Wait(-1, null)) != null) {
-                this.ipAddress.Text = info[0];
-                this.macAddress.Text = info[1];
-                this.cpuUsage.Text = info[2];
-                this.memoryUsage.Text = info[3];
-                this.hddCapcity.Text = info[4];
-            }
-        }
-
-        public void setComStatus(Object source, System.Timers.ElapsedEventArgs e) {
-            this.cpuUsage.Dispatcher.Invoke(
-                () => {
-                    String cpuUse = labManager.GetCpuUsage(num);
-                    if (!cpuUse.Contains("alive") && cpuUsage != null)
-                        this.cpuUsage.Text = cpuUse;
-                }
-                );
-            this.memoryUsage.Dispatcher.Invoke(
-                () => {
-                    String ramUse = labManager.GetRamRemain(num);
-                    if (!ramUse.Contains("alive") && cpuUsage != null)
-                        this.memoryUsage.Text = ramUse;
-                }
-                );
-        }
-        //해당 컴퓨터 전원켜기 구현
-        private void PcPowerOn(object sender, RoutedEventArgs e) {
-            labManager.PcPowerOn(num);
-        }
-        //해당 컴퓨터 전원끄기 구현
-        private async void PcPowerOff(object sender, RoutedEventArgs e) {
-            await labManager.PcPowerOffAsync(num);
-        }
-
-        private async void PcPowerReboot(object sender, RoutedEventArgs e) {
-            await labManager.PcPowerRebootAsync(num);
-        }
-
-        private void Window_Closed(object sender, EventArgs e) {
-            bTimer.Enabled = false;
-        }
+      num = int.Parse(comNo.Substring(4)) - 1;
+      Task<string[]> infoTask = labManager.GetAllDataAsync(num);
+      infoTask.Wait(1000);
+      info = infoTask.Result;
+      if (info != null) {
+        this.ipAddress.Text = info[0];
+        this.macAddress.Text = info[1];
+        this.cpuUsage.Text = info[2];
+        this.memoryUsage.Text = info[3];
+        this.hddCapcity.Text = info[4];
+      }
     }
+
+    public void setComStatus(Object source, System.Timers.ElapsedEventArgs e) {
+      this.cpuUsage.Dispatcher.Invoke(
+          () => {
+            Task<string> cpuTask = labManager.GetCpuUsageAsync(num);
+            cpuTask.Wait(1000);
+            String cpuUse = cpuTask.Result;
+            if (!cpuUse.Contains("alive") && cpuUsage != null)
+              this.cpuUsage.Text = cpuUse;
+          }
+          );
+      this.memoryUsage.Dispatcher.Invoke(
+          () => {
+            Task<string> ramTask = labManager.GetRamRemainAsync(num);
+            ramTask.Wait(1000);
+            String ramUse = ramTask.Result;
+            if (!ramUse.Contains("alive") && cpuUsage != null)
+              this.memoryUsage.Text = ramUse;
+          }
+          );
+    }
+    //해당 컴퓨터 전원켜기 구현
+    private void PcPowerOn(object sender, RoutedEventArgs e) {
+      labManager.PcPowerOn(num);
+    }
+    //해당 컴퓨터 전원끄기 구현
+    private async void PcPowerOff(object sender, RoutedEventArgs e) {
+      await labManager.PcPowerOffAsync(num);
+    }
+
+    private async void PcPowerReboot(object sender, RoutedEventArgs e) {
+      await labManager.PcPowerRebootAsync(num);
+    }
+
+    private void Window_Closed(object sender, EventArgs e) {
+      bTimer.Enabled = false;
+    }
+  }
 }

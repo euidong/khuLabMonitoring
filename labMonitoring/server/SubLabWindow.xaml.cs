@@ -59,7 +59,7 @@ namespace server {
           buttonList.Add(computer);
 
           if (computerNo == ComputerNum) {
-            labManager.SetButtonList(buttonList).Wait(-1, null);
+            labManager.SetButtonList(buttonList);
             return;
           }
         }
@@ -96,15 +96,15 @@ namespace server {
     }
     //전체 컴퓨터 시작
     // FIXME: 작동하지 않음(포트포워딩 문제)
-    private async void AllPcPowerOn(object sender, RoutedEventArgs e) {
-      await labManager.AllPcPowerOnAsync();
+    private void AllPcPowerOn(object sender, RoutedEventArgs e) {
+      labManager.AllPcPowerOn();
     }
-    private void AllPcPowerReboot(object sender, RoutedEventArgs e) {
-      labManager.AllPcPowerReboot();
+    private async void AllPcPowerReboot(object sender, RoutedEventArgs e) {
+      await labManager.AllPcPowerRebootAsync();
     }
 
     private void Window_Closed(object sender, EventArgs e) {
-      labManager.SetAllPcTimeOut(10);
+      labManager.SetAllPcTimeOut(500);
       //랩텍스트 저장
       File.WriteAllText("../../memo/" + this.labNo + "/labMemo.txt", subLabText.Text);
       saveComText();

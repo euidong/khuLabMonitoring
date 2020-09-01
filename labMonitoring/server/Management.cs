@@ -31,28 +31,31 @@ namespace server {
       pc_num = 0;
       pc = new UdpClient[100];
       pc_status = new int[100]; // TODO: 처음에 전부 꺼진 걸로 초기화
+      for (int i = 0; i < 100; i++) {
+        pc_status[i] = (int)State.OFF;
+      }
       file = new StreamReader("../../ip/lab" + lab_num + ".txt");
 
       while ((ip = file.ReadLine()) != null) {
         pc[pc_num] = new UdpClient(ip, port);
-        pc[pc_num++].Client.ReceiveTimeout = 1000; // * 최초 시행 시에는 timeOut을 짧게하고, 그 다음부터는 느리게 수행
+        pc[pc_num++].Client.ReceiveTimeout = 500; // * 최초 시행 시에는 timeOut을 짧게하고, 그 다음부터는 느리게 수행
       }
       file.Close();
     }
-    
-    public async Task<void> SetButtonList(List<Button> list) {
+
+    public void SetButtonList(List<Button> list) {
       buttonList = list;
-      await RenderView(null, null);
+      RenderView(null, null);
     }
     // 상태확인하는 타이머 파라미터 (ms마다 등록한 함수 호출)
     private System.Timers.Timer rerenderTimer = new System.Timers.Timer(5000);
 
-    private async Task<void> RenderView(Object source, System.Timers.ElapsedEventArgs e) {
-      await CheckStatus();
+    private void RenderView(Object source, System.Timers.ElapsedEventArgs e) {
+      CheckStatus().Wait(1000);
       DrawButtonList();
     }
 
-    private async Task<void> CheckStatus() {
+    private async Task CheckStatus() {
       for (int i = 0; i < pc_num; i++) {
         int state = await IsAlive(i);
         if (state == (int)State.ON)
@@ -93,7 +96,7 @@ namespace server {
 
     public async Task<int> IsAlive(int target_pc) {
       await SendMessageAsync(target_pc, "check");
-      string receviedMessage = await receiveAsync(target_pc);
+      string receviedMessage = await ReceiveMessageAsync(target_pc);
 
       if (receviedMessage == null)
         return (int)State.OFF;
@@ -104,7 +107,7 @@ namespace server {
     }
 
 
-    public async Task<string[]> GetAllData(int target_pc) {
+    public async Task<string[]> GetAllDataAsync(int target_pc) {
       await SendMessageAsync(target_pc, "all");
       string result = await ReceiveMessageAsync(target_pc);
       if (result != null)
@@ -114,50 +117,54 @@ namespace server {
     }
 
 
-    public async Task<string> GetIPAddress(int target_pc) {
+    public async Task<string> GetIPAddressAsync(int target_pc) {
       await SendMessageAsync(target_pc, "ip");
       return await ReceiveMessageAsync(target_pc);
     }
 
-    public async Task<string> GetMacAddress(int target_pc) {
+    public async Task<string> GetMacAddressAsync(int target_pc) {
       await SendMessageAsync(target_pc, "mac");
       return await ReceiveMessageAsync(target_pc);
     }
 
-    public async Task<string> GetCpuUsage(int target_pc) {
+    public async Task<string> GetCpuUsageAsync(int target_pc) {
       await SendMessageAsync(target_pc, "cpu");
       return await ReceiveMessageAsync(target_pc);
     }
-    public async Task<string> GetRamRemain(int target_pc) {
+    public async Task<string> GetRamRemainAsync(int target_pc) {
       await SendMessageAsync(target_pc, "ram");
       return await ReceiveMessageAsync(target_pc);
     }
-    public async Task<string> GetHddUsage(int target_pc) {
+    public async Task<string> GetHddUsageAsync(int target_pc) {
       await SendMessageAsync(target_pc, "hdd");
       return await ReceiveMessageAsync(target_pc);
     }
 
     public async Task<string> ReceiveMessageAsync(int target_pc) {
       try {
-        byte[] data = await pc[target_pc].ReceiveAsync(ref sender);
-        return Encoding.UTF8.GetString(data);
-      } catch (ObjectDisposedException e) {
+        UdpReceiveResult result = await pc[target_pc].ReceiveAsync();
+        return Encoding.UTF8.GetString(result.Buffer);
+      }
+      catch (ObjectDisposedException e) {
         Console.WriteLine("연결이 종료되었습니다.");
         return null;
-      } catch (SocketException e) {
+      }
+      catch (SocketException e) {
         Console.WriteLine("연결이 끊겼습니다.");
         return null;
       }
     }
 
-    public async Task<void> SendMessageAsync(int target_pc, string message) {
+    public async Task SendMessageAsync(int target_pc, string message) {
       if (pc[target_pc] != null) {
         byte[] data = Encoding.UTF8.GetBytes(message);
         try {
           await pc[target_pc].SendAsync(data, data.Length);
-        } catch (ObjectDisposedException e) {
+        }
+        catch (ObjectDisposedException e) {
           Console.WriteLine("연결이 종료되었습니다.");
-        } catch (SocketException e) {
+        }
+        catch (SocketException e) {
           Console.WriteLine("연결이 끊겼습니다.");
         }
       }
@@ -196,23 +203,23 @@ namespace server {
     }
     // ! -----------------------------
 
-    public async Task<void> PcPowerOffAsync(int target_pc) {
+    public async Task PcPowerOffAsync(int target_pc) {
       await SendMessageAsync(target_pc, "off");
     }
 
     // TODO: 모두 끝날 때까지 대기하는 로직 추가.
-    public async Task<void> AllPcPowerOffAsync() {
+    public async Task AllPcPowerOffAsync() {
       for (int i = 0; i < pc_num; i++) {
         await PcPowerOffAsync(i);
       }
     }
 
-    public async Task<void> PcPowerRebootAsync(int target_pc) {
+    public async Task PcPowerRebootAsync(int target_pc) {
       await SendMessageAsync(target_pc, "reboot");
     }
 
     // TODO: 모두 끝날 때까지 대기하는 로직 추가.    
-    public async Task<void> AllPcPowerRebootAsync() {
+    public async Task AllPcPowerRebootAsync() {
       for (int i = 0; i < pc_num; i++) {
         await PcPowerRebootAsync(i);
       }
