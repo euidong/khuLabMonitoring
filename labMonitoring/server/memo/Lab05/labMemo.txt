@@ -1,7 +1,0 @@
-System.Windows.Controls.TextBox: lab05 test
-1
-2
-3
-4
-5
-

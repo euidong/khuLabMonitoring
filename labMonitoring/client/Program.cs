@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
@@ -11,28 +12,126 @@ using Microsoft.Win32;
 namespace client {
 
   class Program {
-    private static IPEndPoint serverEndPoint;
-    private static UdpClient server;
-    private static byte[] data;
-    private static byte[] sendData;
-    private static IPEndPoint messageSender;
+
+    private const string serverIp = "127.0.0.1"; // server ip를 입력해야합니다, 
+    private const int serverPingPort = 44484;
+    private const int serverMessagePort = 44485;
+
+    private const int myPingPort = 47214;
+    private const int myMessagePort = 47215;
+
+    // * TODO: 해당 위치에 서버 IP를 삽입해야합니다.
+    private static IPEndPoint serverPingEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), serverPingPort);
+    private static IPEndPoint serverMessageEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), serverMessagePort);
+
+    public class PingThread {
+      private static IPEndPoint remoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
+      public static void DoWork() {
+        byte[] receiveData;
+        byte[] sendData;
+        string msg;
+        while (true) {
+          // 1. ping이 올 때까지 대기
+          UdpClient client = new UdpClient(myPingPort);
+          receiveData = client.Receive(ref remoteIpEndPoint);
+          msg = Encoding.UTF8.GetString(receiveData);
+          Console.WriteLine("get ping");
+          if (msg.Contains("check")) {
+            // 2. alive 신호 전송
+            sendData = Encoding.UTF8.GetBytes("alive");
+            client.Connect(serverPingEndPoint);
+            client.Send(sendData, sendData.Length);
+            client.Close();
+            Console.WriteLine("send ack");
+          }
+        }
+      }
+    }
+
+    public class MessageThread {
+      private static UdpClient client = new UdpClient(myMessagePort);
+      private static IPEndPoint remoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
+      public static void DoWork() {
+        byte[] receiveData;
+        byte[] sendData;
+        string msg;
+        while (true) {
+          receiveData = client.Receive(ref remoteIpEndPoint);
+          msg = Encoding.UTF8.GetString(receiveData);
+          UdpClient server = new UdpClient();
+          server.Connect(remoteIpEndPoint);
+          // 전원 off
+          if (msg.Contains("off")) {
+            sendData = Encoding.UTF8.GetBytes("accepted");
+            server.Send(sendData, sendData.Length);
+            //프로그램을 모두 정리하고 전원 off
+            System.Diagnostics.Process.Start("shutdown.exe", "-s");
+          }
+          // 재부팅
+          else if (msg.Contains("reboot")) {
+            sendData = Encoding.UTF8.GetBytes("accepted");
+            server.Send(sendData, sendData.Length);
+            Process.Start("shutdown.exe", "-r");
+          }
+          else if (msg.Contains("all")) {
+            sendData = Encoding.UTF8.GetBytes(GetIPAddress() + " " +
+                                              GetMacAddress() + " " +
+                                              getCurrentCpuUsage() + " " +
+                                              getAvailableRAM() + " " +
+                                              getCurrentHddUsage() + " ");
+            Console.WriteLine("get data");
+            server.Send(sendData, sendData.Length);
+          }
+          // send IP
+          else if (msg.Contains("ip")) {
+            sendData = Encoding.UTF8.GetBytes(GetIPAddress());
+            Console.WriteLine("get data");
+            server.Send(sendData, sendData.Length);
+          }
+          // send MAC
+          else if (msg.Contains("mac")) {
+            sendData = Encoding.UTF8.GetBytes(GetMacAddress());
+            Console.WriteLine("get data");
+            server.Send(sendData, sendData.Length);
+          }
+
+          // send CPU %
+          else if (msg.Contains("cpu")) {
+            sendData = Encoding.UTF8.GetBytes(getCurrentCpuUsage());
+            Console.WriteLine("get data");
+            server.Send(sendData, sendData.Length);
+          }
+
+          // send RAM %
+          else if (msg.Contains("ram")) {
+            sendData = Encoding.UTF8.GetBytes(getAvailableRAM());
+            Console.WriteLine("get data");
+            server.Send(sendData, sendData.Length);
+          }
+          // send HDD %
+          else if (msg.Contains("hdd")) {
+            sendData = Encoding.UTF8.GetBytes(getCurrentHddUsage());
+            Console.WriteLine("get data");
+            server.Send(sendData, sendData.Length);
+          }
+          else if (msg.Contains("check")) {
+            sendData = Encoding.UTF8.GetBytes("alive");
+            server.Send(sendData, sendData.Length);
+          }
+          // send program shutdown
+          else if (msg.Contains("end"))
+            break;
+          server.Close();
+        }
+      }
+    }
+
     private static PerformanceCounter cpuCounter;
     private static PerformanceCounter ramCounter;
     private static PerformanceCounter hddCounter;
 
 
-    private static void OnPowerChange(object s, PowerModeChangedEventArgs e) {
-      switch (e.Mode) {
-        case PowerModes.Resume:
-          break;
-        case PowerModes.Suspend:
-          sendData = Encoding.UTF8.GetBytes("suspend");
-          server.Send(sendData, sendData.Length, messageSender);
-          break;
-      }
-    }
     static void Main(string[] args) {
-      SystemEvents.PowerModeChanged += OnPowerChange;
 
       // booting 시 자동 실행
       try {
@@ -55,83 +154,18 @@ namespace client {
       hddCounter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total");
       cpuCounter.NextValue();
       hddCounter.NextValue();
-      serverEndPoint = new IPEndPoint(IPAddress.Parse(GetIPAddress()), 10000);
-      server = new UdpClient(serverEndPoint);
-      data = new byte[100];
-      sendData = new byte[100];
+
       Receive();
     }
 
 
     private static void Receive() {
-      while (true) {
-        data = server.Receive(ref messageSender);
-        string msg = Encoding.UTF8.GetString(data);
-        // 전원 off
-        if (msg.Contains("off")) {
-          SendAck(msg);
-          //프로그램을 모두 정리하고 전원 off
-          System.Diagnostics.Process.Start("shutdown.exe", "-s");
-        }
-        // 재부팅
-        else if (msg.Contains("reboot")) {
-          SendAck(msg);
-          Process.Start("shutdown.exe", "-r");
-        }
-        else if (msg.Contains("all")) {
-          sendData = Encoding.UTF8.GetBytes(GetIPAddress() + " " +
-                                            GetMacAddress() + " " +
-                                            getCurrentCpuUsage() + " " +
-                                            getAvailableRAM() + " " +
-                                            getCurrentHddUsage() + " ");
-          Console.WriteLine("get data");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-        // send IP
-        else if (msg.Contains("ip")) {
-          sendData = Encoding.UTF8.GetBytes(GetIPAddress());
-          Console.WriteLine("get data");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-        // send MAC
-        else if (msg.Contains("mac")) {
-          sendData = Encoding.UTF8.GetBytes(GetMacAddress());
-          Console.WriteLine("get data");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-
-        // send CPU %
-        else if (msg.Contains("cpu")) {
-          sendData = Encoding.UTF8.GetBytes(getCurrentCpuUsage());
-          Console.WriteLine("get data");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-
-        // send RAM %
-        else if (msg.Contains("ram")) {
-          sendData = Encoding.UTF8.GetBytes(getAvailableRAM());
-          Console.WriteLine("get data");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-        // send HDD %
-        else if (msg.Contains("hdd")) {
-          sendData = Encoding.UTF8.GetBytes(getCurrentHddUsage());
-          Console.WriteLine("get data");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-        else if (msg.Contains("check")) {
-          sendData = Encoding.UTF8.GetBytes("alive");
-          server.Send(sendData, sendData.Length, messageSender);
-        }
-        // send program shutdown
-        else if (msg.Contains("end"))
-          break;
-      }
-    }
-
-    private static void SendAck(string msg) {
-      sendData = Encoding.UTF8.GetBytes("accepted");
-      server.Send(sendData, sendData.Length, messageSender);
+      Thread pingThread = new Thread(PingThread.DoWork);
+      Thread messageThread = new Thread(MessageThread.DoWork);
+      pingThread.Start();
+      messageThread.Start();
+      pingThread.Join();
+      messageThread.Join();
     }
 
 
@@ -194,11 +228,5 @@ namespace client {
       float percent = maxMem / ramCounter.NextValue();
       return percent.ToString() + "%";
     }
-
+    }
   }
-
-
-
-
-
-}

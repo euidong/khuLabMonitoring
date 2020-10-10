@@ -29,6 +29,7 @@ namespace server {
       this.labNo = labNo;
       this.comNo.Text = comNo;
       this.labManager = labManager;
+      labManager.rerenderTimer.Enabled = false;
       bTimer.Elapsed += setComStatus;
       bTimer.Enabled = true;
       /*
@@ -50,19 +51,16 @@ namespace server {
 
     public void setComStatus(Object source, System.Timers.ElapsedEventArgs e) {
       this.cpuUsage.Dispatcher.Invoke(
-          () => {
-            Task<string> cpuTask = labManager.GetCpuUsageAsync(num);
-            cpuTask.Wait(1000);
-            String cpuUse = cpuTask.Result;
+          async () => {
+            string cpuUse = await labManager.GetCpuUsageAsync(num);
+            
             if (!cpuUse.Contains("alive") && cpuUsage != null)
               this.cpuUsage.Text = cpuUse;
           }
           );
       this.memoryUsage.Dispatcher.Invoke(
-          () => {
-            Task<string> ramTask = labManager.GetRamRemainAsync(num);
-            ramTask.Wait(1000);
-            String ramUse = ramTask.Result;
+          async () => {
+            string ramUse = await labManager.GetRamRemainAsync(num);
             if (!ramUse.Contains("alive") && cpuUsage != null)
               this.memoryUsage.Text = ramUse;
           }
@@ -73,16 +71,17 @@ namespace server {
       labManager.PcPowerOn(num);
     }
     //해당 컴퓨터 전원끄기 구현
-    private async void PcPowerOff(object sender, RoutedEventArgs e) {
-      await labManager.PcPowerOffAsync(num);
+    private void PcPowerOff(object sender, RoutedEventArgs e) {
+      labManager.PcPowerOff(num);
     }
 
-    private async void PcPowerReboot(object sender, RoutedEventArgs e) {
-      await labManager.PcPowerRebootAsync(num);
+    private void PcPowerReboot(object sender, RoutedEventArgs e) {
+      labManager.PcPowerReboot(num);
     }
 
     private void Window_Closed(object sender, EventArgs e) {
       bTimer.Enabled = false;
+      labManager.rerenderTimer.Enabled = true;
     }
   }
 }

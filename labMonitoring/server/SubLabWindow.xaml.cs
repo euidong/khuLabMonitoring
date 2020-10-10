@@ -91,20 +91,20 @@ namespace server {
 
     }
     //전체 컴퓨터 종료
-    private async void AllPcPowerOff(object sender, RoutedEventArgs e) {
-      await labManager.AllPcPowerOffAsync();
+    private void AllPcPowerOff(object sender, RoutedEventArgs e) {
+      labManager.AllPcPowerOff();
     }
     //전체 컴퓨터 시작
     // FIXME: 작동하지 않음(포트포워딩 문제)
     private void AllPcPowerOn(object sender, RoutedEventArgs e) {
       labManager.AllPcPowerOn();
     }
-    private async void AllPcPowerReboot(object sender, RoutedEventArgs e) {
-      await labManager.AllPcPowerRebootAsync();
+    private void AllPcPowerReboot(object sender, RoutedEventArgs e) {
+      labManager.AllPcPowerReboot();
     }
 
     private void Window_Closed(object sender, EventArgs e) {
-      labManager.SetAllPcTimeOut(500);
+      // labManager.SetAllPcTimeOut(500);
       //랩텍스트 저장
       File.WriteAllText("../../memo/" + this.labNo + "/labMemo.txt", subLabText.Text);
       saveComText();
