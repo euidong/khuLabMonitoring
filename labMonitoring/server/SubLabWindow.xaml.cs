@@ -104,7 +104,6 @@ namespace server {
     }
 
     private void Window_Closed(object sender, EventArgs e) {
-      // labManager.SetAllPcTimeOut(500);
       //랩텍스트 저장
       File.WriteAllText("../../memo/" + this.labNo + "/labMemo.txt", subLabText.Text);
       saveComText();

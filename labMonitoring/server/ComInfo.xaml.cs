@@ -29,7 +29,6 @@ namespace server {
       this.labNo = labNo;
       this.comNo.Text = comNo;
       this.labManager = labManager;
-      labManager.rerenderTimer.Enabled = false;
       bTimer.Elapsed += setComStatus;
       bTimer.Enabled = true;
       /*
@@ -37,9 +36,7 @@ namespace server {
        */
 
       num = int.Parse(comNo.Substring(4)) - 1;
-      Task<string[]> infoTask = labManager.GetAllDataAsync(num);
-      infoTask.Wait(1000);
-      info = infoTask.Result;
+      info = labManager.GetAllData(num);
       if (info != null) {
         this.ipAddress.Text = info[0];
         this.macAddress.Text = info[1];

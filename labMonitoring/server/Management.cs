@@ -61,22 +61,17 @@ namespace server {
     public System.Timers.Timer rerenderTimer = new System.Timers.Timer(5000);
 
     private void RenderView(Object source, System.Timers.ElapsedEventArgs e) {
-      CheckStatus().Wait(1000);
       DrawButtonList();
+      CheckStatus().Wait(1000);
     }
 
-    private async Task CheckStatus() {
+    private Task CheckStatus() {
       for (int i = 0; i < clientNum; i++) {
         Console.WriteLine("send ping" + i);
-        int state = await IsAlive(i);
+        IsAlive(i);
         Console.WriteLine("get ack" + i);
-        if (state == (int)PowerState.ON)
-          clientPowerState[i] = state;
-        else if (clientPowerState[i] != (int)PowerState.SUSPEND)
-          clientPowerState[i] = state;
-        else
-          clientPowerState[i] = (int)PowerState.OFF;
       }
+      return null;
     }
     private void DrawButtonList() {
       if (buttonList != null) {
@@ -100,61 +95,55 @@ namespace server {
       }
     }
 
-
-    //public void SetAllPcTimeOut(int time) {
-    //  pingServer.Client.ReceiveTimeout = time;
-    //  messageServer.Client.ReceiveTimeout = time;
-    //}
-
-    public async Task<int> IsAlive(int targetPc) {
+    public void IsAlive(int targetPc) {
       SendPing(targetPc);
-      string receviedMessage = await ReceivePingAsync(targetPc);
-
+      string receviedMessage = ReceivePing(targetPc);
       if (receviedMessage == null)
-        return (int)PowerState.OFF;
+        clientPowerState[targetPc] = (int)PowerState.OFF;
       else if (receviedMessage == "suspend")
-        return (int)PowerState.SUSPEND;
+        clientPowerState[targetPc] = (int)PowerState.SUSPEND;
       else
-        return (int)PowerState.ON;
+        clientPowerState[targetPc] = (int)PowerState.ON;
     }
 
-    public async Task<string[]> GetAllDataAsync(int targetPc) {
+    public string[] GetAllData(int targetPc) {
       SendMessage(targetPc, "all");
-      string result = await ReceiveMessageAsync(targetPc);
+      string result = ReceiveMessage(targetPc);
       if (result != null)
         return result.Split(' ');
       else
         return null;
     }
 
-    public async Task<string> GetIPAddressAsync(int targetPc) {
+    public string GetIPAddress(int targetPc) {
       SendMessage(targetPc, "ip");
-      return await ReceiveMessageAsync(targetPc);
+      return ReceiveMessage(targetPc);
     }
-    public async Task<string> GetMacAddressAsync(int targetPc) {
+    public string GetMacAddress(int targetPc) {
       SendMessage(targetPc, "mac");
-      return await ReceiveMessageAsync(targetPc);
+      return ReceiveMessage(targetPc);
     }
     public async Task<string> GetCpuUsageAsync(int targetPc) {
       SendMessage(targetPc, "cpu");
-      return await ReceiveMessageAsync(targetPc);
+      
+      return await Task.Run(() => ReceiveMessage(targetPc));
     }
     public async Task<string> GetRamRemainAsync(int targetPc) {
       SendMessage(targetPc, "ram");
-      return await ReceiveMessageAsync(targetPc);
+      return await Task.Run(() => ReceiveMessage(targetPc));
     }
-    public async Task<string> GetHddUsageAsync(int targetPc) {
+    public string GetHddUsage(int targetPc) {
       SendMessage(targetPc, "hdd");
-      return await ReceiveMessageAsync(targetPc);
+      return ReceiveMessage(targetPc);
     }
 
-    public async Task<string> ReceivePingAsync(int targetPc) {
-      UdpClient pingServer = new UdpClient( pingServerPort);
+    public string ReceivePing(int targetPc) {
+      UdpClient pingServer = new UdpClient(pingServerPort);
       try {
+        pingServer.Client.ReceiveTimeout = 1000;
         pingServer.Connect(pingClient[targetPc]);
-        UdpReceiveResult result = await pingServer.ReceiveAsync();
-        Console.WriteLine(Encoding.UTF8.GetString(result.Buffer));
-        return Encoding.UTF8.GetString(result.Buffer);
+        byte[] bytes = pingServer.Receive(ref pingClient[targetPc]);
+        return Encoding.UTF8.GetString(bytes);
       } catch (ObjectDisposedException e) {
         Console.WriteLine(e);
         Console.WriteLine("연결이 종료되었습니다.");
@@ -168,12 +157,14 @@ namespace server {
       }
     }
 
-    public async Task<string> ReceiveMessageAsync(int targetPc) {
+    public string ReceiveMessage(int targetPc) {
       UdpClient messageServer = new UdpClient(messageServerPort);
       try {
+        messageServer.Client.ReceiveTimeout = 1000;
         messageServer.Connect(messageClient[targetPc]);
-        UdpReceiveResult result = await messageServer.ReceiveAsync();
-        return Encoding.UTF8.GetString(result.Buffer);
+        byte[] bytes = messageServer.Receive(ref messageClient[targetPc]);
+        Console.WriteLine("get message");
+        return Encoding.UTF8.GetString(bytes);
       } catch (ObjectDisposedException) {
         Console.WriteLine("연결이 종료되었습니다.");
         return null;
@@ -187,35 +178,34 @@ namespace server {
 
     public void SendPing(int targetPc) {
       if (pingClient[targetPc] != null) {
-        UdpClient client = new UdpClient();
+        UdpClient server = new UdpClient();
         byte[] data = Encoding.UTF8.GetBytes("check");
         try {
-          client.Connect(pingClient[targetPc]);
-          client.Send(data, data.Length);
-          
+          server.Connect(pingClient[targetPc]);
+          server.Send(data, data.Length);  
         } catch (ObjectDisposedException) {
           Console.WriteLine("연결이 종료되었습니다.");
         } catch (SocketException) {
           Console.WriteLine("연결이 끊겼습니다.");
         } finally {
-          client.Close();
+          server.Close();
         }
       }
     }
 
     public void SendMessage(int targetPc, string message) {
       if (messageClient[targetPc] != null) {
-        UdpClient client = new UdpClient();
+        UdpClient server = new UdpClient();
         byte[] data = Encoding.UTF8.GetBytes(message);
         try {
-          client.Connect(messageClient[targetPc]);
-          client.Send(data, data.Length);
+          server.Connect(messageClient[targetPc]);
+          server.Send(data, data.Length);
         } catch (ObjectDisposedException) {
           Console.WriteLine("연결이 종료되었습니다.");
         } catch (SocketException) {
           Console.WriteLine("연결이 끊겼습니다.");
         } finally {
-          client.Close();
+          server.Close();
         }
       }
     }
