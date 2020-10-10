@@ -59,7 +59,7 @@ namespace server {
           buttonList.Add(computer);
 
           if (computerNo == ComputerNum) {
-            labManager.setButtonList(buttonList);
+            labManager.SetButtonList(buttonList);
             return;
           }
         }
@@ -104,10 +104,9 @@ namespace server {
     }
 
     private void Window_Closed(object sender, EventArgs e) {
-      labManager.renderView(10, null);
+      // labManager.SetAllPcTimeOut(500);
       //랩텍스트 저장
       File.WriteAllText("../../memo/" + this.labNo + "/labMemo.txt", subLabText.Text);
-
       saveComText();
     }
 

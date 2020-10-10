@@ -334,7 +334,12 @@ ASALocalRun/
 .mfractor/
 
 # Local History for Visual Studio
-.localhistory/
+.localhistory
+
+server/ip
+server/memo
+
+
 
 # BeatPulse healthcheck temp database
 healthchecksdb
