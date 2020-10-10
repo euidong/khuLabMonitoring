@@ -13,7 +13,7 @@ namespace client {
 
   class Program {
 
-    private const string serverIp = "127.0.0.1"; // server ip를 입력해야합니다, 
+    private const string serverIp = "192.168.10.103"; // server ip를 입력해야합니다, 
     private const int serverPingPort = 44484;
     private const int serverMessagePort = 44485;
 
@@ -49,28 +49,27 @@ namespace client {
     }
 
     public class MessageThread {
-      private static UdpClient client = new UdpClient(myMessagePort);
       private static IPEndPoint remoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
       public static void DoWork() {
         byte[] receiveData;
         byte[] sendData;
         string msg;
         while (true) {
+          UdpClient client = new UdpClient(myMessagePort);
           receiveData = client.Receive(ref remoteIpEndPoint);
           msg = Encoding.UTF8.GetString(receiveData);
-          UdpClient server = new UdpClient();
-          server.Connect(remoteIpEndPoint);
+          client.Connect(serverMessageEndPoint);
           // 전원 off
           if (msg.Contains("off")) {
             sendData = Encoding.UTF8.GetBytes("accepted");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
             //프로그램을 모두 정리하고 전원 off
             System.Diagnostics.Process.Start("shutdown.exe", "-s");
           }
           // 재부팅
           else if (msg.Contains("reboot")) {
             sendData = Encoding.UTF8.GetBytes("accepted");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
             Process.Start("shutdown.exe", "-r");
           }
           else if (msg.Contains("all")) {
@@ -80,48 +79,49 @@ namespace client {
                                               getAvailableRAM() + " " +
                                               getCurrentHddUsage() + " ");
             Console.WriteLine("get data");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
           // send IP
           else if (msg.Contains("ip")) {
             sendData = Encoding.UTF8.GetBytes(GetIPAddress());
             Console.WriteLine("get data");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
           // send MAC
           else if (msg.Contains("mac")) {
             sendData = Encoding.UTF8.GetBytes(GetMacAddress());
             Console.WriteLine("get data");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
 
           // send CPU %
           else if (msg.Contains("cpu")) {
             sendData = Encoding.UTF8.GetBytes(getCurrentCpuUsage());
             Console.WriteLine("get data");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
 
           // send RAM %
           else if (msg.Contains("ram")) {
             sendData = Encoding.UTF8.GetBytes(getAvailableRAM());
             Console.WriteLine("get data");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
           // send HDD %
           else if (msg.Contains("hdd")) {
             sendData = Encoding.UTF8.GetBytes(getCurrentHddUsage());
             Console.WriteLine("get data");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
           else if (msg.Contains("check")) {
             sendData = Encoding.UTF8.GetBytes("alive");
-            server.Send(sendData, sendData.Length);
+            client.Send(sendData, sendData.Length);
           }
           // send program shutdown
           else if (msg.Contains("end"))
             break;
-          server.Close();
+          Console.WriteLine("send data");
+          client.Close();
         }
       }
     }
