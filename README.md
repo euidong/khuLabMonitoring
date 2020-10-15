@@ -14,6 +14,11 @@
 <img src='https://blog.kakaocdn.net/dn/bjsDsi/btqxXJM3JKe/WAK7xHbOm7kxyVqRIvoOaK/img.jpg' width="500px">
 </p>
 
+### Brief
+
+해당 프로젝트는 대학의 PC 랩실 관리를 목적으로 만들어졋다. 각 PC의 상태와 해당 상태를 바꾸는 것과 같은 기능을 제공한다.
+This project aim to mamage univercity PC lab. So, we provide that monitor each pc status and change that.
+
 ### Member
 - JHyunB : (주)로직 설계 및 디자인 (부) 통신
 - euidong : (주)통신 및 로직 설계 (부) 디자인
