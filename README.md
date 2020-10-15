@@ -38,8 +38,8 @@ This project aim to mamage univercity PC lab. So, we provide that monitor each p
   - server 불안정 버그 수정
     - 갑작스러운 연결 종료 이슈 확인 및 수정
     - 전체 서버 코드의 비동기 작업 부적절한 작동 확인 및 수정
-  - coding convension 통일을 통해서 코드 가독성 강화   
-
+  - coding convention 통일을 통해서 코드 가독성 강화
+    - <a href="https://github.com/euidong/khuLabMonitoring/blob/master/code%20convenstion.md">정리 내용</a>
 ### Server 
 - UDP 통신을 보내는 대상
 - GUI 구현(tray, mainView, subView, comInfo)
