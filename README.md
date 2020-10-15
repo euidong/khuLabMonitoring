@@ -10,6 +10,10 @@
 
 </div>
 
+<p align="center">
+<img src='https://blog.kakaocdn.net/dn/bjsDsi/btqxXJM3JKe/WAK7xHbOm7kxyVqRIvoOaK/img.jpg' width="500px">
+</p>
+
 ### Member
 - JHyunB : (주)로직 설계 및 디자인 (부) 통신
 - euidong : (주)통신 및 로직 설계 (부) 디자인
